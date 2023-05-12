@@ -113,7 +113,7 @@ AUTH_USER_MODEL = 'reviews.User'
 
 # отправка писем в папку sent_emails
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
-EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails') 
+EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
 
 
 REST_FRAMEWORK = {
