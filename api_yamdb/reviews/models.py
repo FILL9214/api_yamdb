@@ -1,26 +1,87 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import RegexValidator
 
 
 class User(AbstractUser):
+    """
+    Кастомная модель для создания пользователей
+    """
+    USER = 'user'
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
 
+    ROLES_CHOICES = (
+        (USER, USER),
+        (MODERATOR, MODERATOR),
+        (ADMIN, ADMIN),
+    )
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        validators=[
+            RegexValidator(r'^[\w.@+-]+\Z',
+                           message='Буквы, цифры и символы @/./+/-/_'
+                           )],
+    )
     email = models.EmailField(
         'e-mail адрес',
-        max_length=100,
+        max_length=254,
         unique=True,
         blank=False,
+    )
+    role = models.CharField(
+        'Роль',
+        max_length=50,
+        choices=ROLES_CHOICES,
+        default=USER
     )
     bio = models.TextField(
         'Биография',
         blank=True,
     )
+    first_name = models.CharField(
+        'Имя',
+        max_length=150,
+        blank=True
+    )
+    last_name = models.CharField(
+        'Фамилия',
+        max_length=150,
+        blank=True
+    )
+    confirmation_code = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name='Код для идентификации'
+    )
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['username', 'email'], name='unique_together'
+            )
+        ]
+
+    @property
+    def is_admin(self):
+        return self.role == self.ADMIN
+
+    @property
+    def is_moderator(self):
+        return self.role == self.MODERATOR
+
+    def __str__(self):
+        return self.username
 
 
 class Category(models.Model):
     name = models.CharField(max_length=256)
     slug = models.CharField(max_length=50)
-    
+
     def __str__(self):
         return self.name
 
