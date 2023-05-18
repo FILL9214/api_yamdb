@@ -1,35 +1,74 @@
 from rest_framework import serializers
-from reviews.models import Category, Genre, Title, GenreTitle, Comment, Review
+from reviews.models import (
+    Category,
+    Genre,
+    Title,
+    Comment,
+    Review,
+    User
+)
 
 
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = '__all__'
+        fields = ('name', 'slug')
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = ('id', 'name')
+        fields = ('name', 'slug')
         model = Genre
 
 
 class TitleSerializer(serializers.ModelSerializer):
-    genres = GenreSerializer(many=True, required=False)
+    category = CategorySerializer(
+        read_only=True
+    )
+    genre = GenreSerializer(
+        many=True,
+        read_only=True,
+    )
+    rating = serializers.IntegerField(read_only=True)
 
     class Meta:
-        fields = ('id', 'year', 'description', 'category', 'genres')
+        fields = ('id',
+                  'name',
+                  'year',
+                  'description',
+                  'category',
+                  'genre',
+                  'rating')
         model = Title
 
-    def create(self, validated_data):
-        genres = validated_data.pop('genres')
-        title = Title.objects.create(**validated_data)
-        for genre in genres:
-            current_genre, status = Genre.objects.get_or_create(**genre)
-            GenreTitle.objects.create(genre=current_genre, title=title)
-        return title
+
+class TitleWriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для добавления и
+    частичного изменения информации о произведении.
+    """
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='slug',
+        many=False,
+    )
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        slug_field='slug',
+        many=True,
+    )
+
+    class Meta:
+        model = Title
+        fields = (
+            'id',
+            'name',
+            'description',
+            'year',
+            'genre',
+            'category',
+        )
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -63,3 +102,37 @@ class ReviewSerializer(serializers.ModelSerializer):
                 'Нельзя оставить больше одного обзора.')
         review = Review.objects.create(**validated_data,)
         return review
+
+
+class AdminModerSerializer(serializers.ModelSerializer):
+    """Сериализатор для пользователя с ролью 'moderator', 'admin'."""
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+
+
+class SimpleUserSerializer(serializers.ModelSerializer):
+    """Сериализатор для пользователя с ролью 'user'."""
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+        read_only_fields = ('role',)
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    """Сериализатор получение кода подтверждения."""
+    class Meta:
+        model = User
+        fields = ('email', 'username')
+
+
+class TokenSerializer(serializers.Serializer):
+    """Сериализатор получение токена."""
+    username = serializers.CharField(
+        max_length=150
+    )
+    confirmation_code = serializers.CharField()

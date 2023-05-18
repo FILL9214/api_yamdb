@@ -24,5 +24,6 @@ class Command(BaseCommand):
                               encoding="utf-8-sig")):
             genretitle = GenreTitle(
                 genre_id=row['genre_id'],
-                title_id=row['title_id'])
+                title_id=row['title_id'],
+                id=row['id'])
             genretitle.save()

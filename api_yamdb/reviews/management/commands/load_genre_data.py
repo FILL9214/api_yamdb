@@ -22,5 +22,5 @@ class Command(BaseCommand):
         for row in DictReader(open(
                               './static/data/genre.csv',
                               encoding="utf-8-sig")):
-            genre = Genre(name=row['name'], slug=row['slug'])
+            genre = Genre(name=row['name'], slug=row['slug'], id=row['id'])
             genre.save()

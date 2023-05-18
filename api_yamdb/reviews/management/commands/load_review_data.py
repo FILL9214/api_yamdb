@@ -27,5 +27,6 @@ class Command(BaseCommand):
                 author_id=row['author'],
                 text=row['text'],
                 pub_date=row['pub_date'],
-                score=row['score'])
+                score=row['score'],
+                id=row['id'])
             review.save()

@@ -2,12 +2,12 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
+import uuid
+from .validators import validate_username
 
 
 class User(AbstractUser):
-    """
-    Кастомная модель для создания пользователей
-    """
+    """Кастомная модель для создания пользователей"""
     USER = 'user'
     ADMIN = 'admin'
     MODERATOR = 'moderator'
@@ -23,7 +23,13 @@ class User(AbstractUser):
         validators=[
             RegexValidator(r'^[\w.@+-]+\Z',
                            message='Буквы, цифры и символы @/./+/-/_'
-                           )],
+                           ),
+            validate_username])
+    email = models.EmailField(
+        'e-mail адрес',
+        max_length=254,
+        unique=True,
+        blank=False,
     )
     email = models.EmailField(
         'e-mail адрес',
@@ -51,10 +57,11 @@ class User(AbstractUser):
         max_length=150,
         blank=True
     )
-    confirmation_code = models.CharField(
-        max_length=150,
-        blank=True,
-        verbose_name='Код для идентификации'
+    confirmation_code = models.UUIDField(
+        'Код для получения/обновления токена',
+        default=uuid.uuid4,
+        editable=False,
+        unique=True
     )
 
     class Meta:
@@ -80,7 +87,7 @@ class User(AbstractUser):
 
 class Category(models.Model):
     name = models.CharField(max_length=256)
-    slug = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True, max_length=50)
 
     def __str__(self):
         return self.name
@@ -88,7 +95,7 @@ class Category(models.Model):
 
 class Genre(models.Model):
     name = models.CharField(max_length=256)
-    slug = models.CharField(max_length=50)
+    slug = models.SlugField(unique=True, max_length=50)
 
     def __str__(self):
         return self.name
@@ -103,7 +110,7 @@ class Title (models.Model):
         on_delete=models.SET_NULL,
         related_name='categories',
         blank=True, null=True)
-    genres = models.ManyToManyField(Genre, through='GenreTitle')
+    genre = models.ManyToManyField(Genre, through='GenreTitle')
 
     def __str__(self):
         return self.name

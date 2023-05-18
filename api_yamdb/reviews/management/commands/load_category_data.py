@@ -22,5 +22,8 @@ class Command(BaseCommand):
         for row in DictReader(open(
                               './static/data/category.csv',
                               encoding="utf-8-sig")):
-            category = Category(name=row['name'], slug=row['slug'])
+            category = Category(
+                name=row['name'],
+                slug=row['slug'],
+                id=row['id'])
             category.save()

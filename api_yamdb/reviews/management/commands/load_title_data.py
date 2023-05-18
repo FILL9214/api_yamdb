@@ -26,5 +26,6 @@ class Command(BaseCommand):
             title = Title(
                 name=row['name'],
                 year=row['year'],
-                category_id=row['category'])
+                category_id=row['category'],
+                id=row['id'])
             title.save()

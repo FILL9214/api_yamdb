@@ -26,5 +26,6 @@ class Command(BaseCommand):
                 review_id=row['review_id'],
                 author_id=row['author'],
                 text=row['text'],
-                pub_date=row['pub_date'])
+                pub_date=row['pub_date'],
+                id=row['id'])
             comment.save()
