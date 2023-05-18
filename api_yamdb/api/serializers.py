@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from reviews.models import Category, Genre, Title, GenreTitle, Comment, Review
+from reviews.models import (
+    Category,
+    Genre,
+    Title,
+    GenreTitle,
+    Comment,
+    Review,
+    User
+)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -63,3 +71,37 @@ class ReviewSerializer(serializers.ModelSerializer):
                 'Нельзя оставить больше одного обзора.')
         review = Review.objects.create(**validated_data,)
         return review
+
+
+class AdminModerSerializer(serializers.ModelSerializer):
+    """Сериализатор для пользователя с ролью 'moderator', 'admin'."""
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+
+
+class SimpleUserSerializer(serializers.ModelSerializer):
+    """Сериализатор для пользователя с ролью 'user'."""
+    class Meta:
+        model = User
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role'
+        )
+        read_only_fields = ('role',)
+
+
+class SignUpSerializer(serializers.ModelSerializer):
+    """Сериализатор получение кода подтверждения."""
+    class Meta:
+        model = User
+        fields = ('email', 'username')
+
+
+class TokenSerializer(serializers.Serializer):
+    """Сериализатор получение токена."""
+    username = serializers.CharField(
+        max_length=150
+    )
+    confirmation_code = serializers.CharField()

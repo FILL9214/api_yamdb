@@ -3,11 +3,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 
+from .validators import validate_username
+
 
 class User(AbstractUser):
-    """
-    Кастомная модель для создания пользователей
-    """
+    """Кастомная модель для создания пользователей"""
     USER = 'user'
     ADMIN = 'admin'
     MODERATOR = 'moderator'
@@ -23,7 +23,13 @@ class User(AbstractUser):
         validators=[
             RegexValidator(r'^[\w.@+-]+\Z',
                            message='Буквы, цифры и символы @/./+/-/_'
-                           )],
+                           ),
+            validate_username])
+    email = models.EmailField(
+        'e-mail адрес',
+        max_length=254,
+        unique=True,
+        blank=False,
     )
     email = models.EmailField(
         'e-mail адрес',
