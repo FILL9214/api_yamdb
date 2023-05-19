@@ -129,6 +129,11 @@ class SignUpSerializer(serializers.ModelSerializer):
         model = User
         fields = ('email', 'username')
 
+    # по урокам с котиками и тырнету вроде оно
+    def create(self, validated_data):
+        user = User.objects.get_or_create(**validated_data)
+        return user
+
 
 class TokenSerializer(serializers.Serializer):
     """Сериализатор получение токена."""

@@ -2,6 +2,7 @@ from django.db.models import Avg
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
+
 from .serializers import (
     CategorySerializer,
     GenreSerializer,
@@ -30,6 +31,7 @@ from .permissions import (IsAdminOnlyPermission,
 from .mixins import GetListCreateDeleteViewSet
 from .filters import FilterTitleSet
 from rest_framework.pagination import PageNumberPagination
+from django.conf import settings
 
 
 class CategoryViewSet(GetListCreateDeleteViewSet):
@@ -120,7 +122,7 @@ class SignUpViewSet(APIView):
             message=(
                 f'Ваш confirmation_code: {user.confirmation_code}\n'
             ),
-            from_email='yambd@email.ru',
+            from_email=settings.OUTGOING_EMAIL,
             recipient_list=[request.data.get('email')],
             fail_silently=False,
         )
