@@ -99,7 +99,8 @@ class ReviewSerializer(serializers.ModelSerializer):
             request.method == 'POST'
             and Review.objects.filter(title=title, author=author).exists()
         ):
-            raise serializers.ValidationError('Может существовать только один отзыв.')
+            raise serializers.ValidationError(
+                'Может существовать только один отзыв.')
         return data
 
     class Meta:
