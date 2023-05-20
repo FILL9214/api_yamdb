@@ -112,13 +112,49 @@ class SignUpViewSet(APIView):
 
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
-        if (User.objects.filter(username=request.data.get('username'),
-                                email=request.data.get('email'))):
-            user = User.objects.get(username=request.data.get('username'))
-            serializer = SignUpSerializer(user, data=request.data)
+        # ---------------------------
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user = User.objects.get(username=request.data.get('username'))
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        user, created = User.objects.get_or_create(username=username,
+                                                   email=email)
+        user.save()
+    #     # ---------------------
+    #     serializer.is_valid(raise_exception=True)
+    #     email = serializer.validated_data['email']
+    #     username = serializer.validated_data['username']
+    #     try:
+    #         user, created = User.objects.get_or_create(
+    #             username=username,
+    #             email=email
+    #         )
+    #     except IntegrityError:
+    #         return Response(
+    #             'Такой логин или email уже существуют',
+    #             status=HTTP_400_BAD_REQUEST
+    #         )
+    #     if not created:
+    #         serializer = SignUpSerializer(user, data={'email': user.email, 'username': user.username})
+    #     user.save()
+
+        # 2 -----------------------------
+        # serializer.is_valid(raise_exception=True)
+        # user, created = User.objects.get_or_create(
+        #     username=serializer.validated_data['username'],
+        #     email=serializer.validated_data['email']
+        # )
+        # if not created:
+        #     serializer = SignUpSerializer(user, data=request.data)
+        
+        # 3 original -----------------------------
+        # if (User.objects.filter(username=request.data.get('username'),
+        #                         email=request.data.get('email'))):
+        #     user = User.objects.get(username=request.data.get('username'))
+        #     serializer = SignUpSerializer(user, data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        # serializer.save()
+        # user = User.objects.get(username=request.data.get('username'))  # куда ж тебя деть сука
+
         send_mail(
             subject='YAMDB confirmation code',
             message=(
@@ -173,16 +209,13 @@ class UsersViewSet(viewsets.ModelViewSet):
         url_path='me', permission_classes=(SelfUserPermission,)
     )
     def me_user(self, request):
-        if request.method == 'GET':
-            user = get_object_or_404(
-                User, username=request.user
-            )
-            serializer = self.get_serializer(user)
-            return Response(serializer.data)
-
         user = get_object_or_404(
             User, username=request.user
         )
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+
         serializer = SimpleUserSerializer(
             user, data=request.data, partial=True
         )

@@ -131,9 +131,9 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 class SignUpSerializer(serializers.ModelSerializer):
     """Сериализатор получение кода подтверждения."""
 
-    def create(self, validated_data):
-        user, _ = User.objects.get_or_create(**validated_data)
-        return user
+    # def create(self, validated_data):
+    #     user, _ = User.objects.get_or_create(**validated_data)
+    #     return user
 
     class Meta:
         model = User
