@@ -83,12 +83,12 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(slug_field='username',
-                                          read_only=True)
-
-    class Meta:
-        fields = '__all__'
-        model = Review
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        many=False,
+    )
+    score = serializers.IntegerField(max_value=10, min_value=1)
 
     def validate(self, data):
         request = self.context['request']
@@ -99,10 +99,13 @@ class ReviewSerializer(serializers.ModelSerializer):
             request.method == 'POST'
             and Review.objects.filter(title=title, author=author).exists()
         ):
-            raise serializers.ValidationError(
-                'Нельзя оставить больше одного обзора.'
-            )
+            raise serializers.ValidationError('Может существовать только один отзыв.')
         return data
+
+    class Meta:
+        fields = ('id', 'text', 'author', 'score', 'pub_date',)
+        read_only = ('id',)
+        model = Review
 
 
 class AdminModerSerializer(serializers.ModelSerializer):
