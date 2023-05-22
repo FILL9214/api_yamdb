@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.db.models import Avg
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
@@ -83,7 +84,8 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         review = get_object_or_404(
             Review,
-            id=self.kwargs.get('review_id'))
+            id=self.kwargs.get('review_id'),
+            title_id=self.kwargs.get('title_id'),)
         serializer.save(author=self.request.user, review=review)
 
 
@@ -110,14 +112,20 @@ class SignUpViewSet(APIView):
     permission_classes = (AllowAny,)
 
     def post(self, request):
+        """Создание пользователя И Отправка письма с кодом."""
+        # ----------------------------
         serializer = SignUpSerializer(data=request.data)
-        if (User.objects.filter(username=request.data.get('username'),
-                                email=request.data.get('email'))):
-            user = User.objects.get(username=request.data.get('username'))
-            serializer = SignUpSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user = User.objects.get(username=request.data.get('username'))
+        user, _ = User.objects.get_or_create(**serializer.validated_data)
+        user.save()
+        # serializer = SignUpSerializer(data=request.data)
+        # if (User.objects.filter(username=request.data.get('username'),
+        #                         email=request.data.get('email'))):
+        #     user = User.objects.get(username=request.data.get('username'))
+        #     serializer = SignUpSerializer(user, data=request.data)
+        # serializer.is_valid(raise_exception=True)
+        # serializer.save()
+        # user = User.objects.get(username=request.data.get('username'))
         send_mail(
             subject='YAMDB confirmation code',
             message=(
@@ -172,16 +180,13 @@ class UsersViewSet(viewsets.ModelViewSet):
         url_path='me', permission_classes=(SelfUserPermission,)
     )
     def me_user(self, request):
-        if request.method == 'GET':
-            user = get_object_or_404(
-                User, username=request.user
-            )
-            serializer = self.get_serializer(user)
-            return Response(serializer.data)
-
         user = get_object_or_404(
             User, username=request.user
         )
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data)
+
         serializer = SimpleUserSerializer(
             user, data=request.data, partial=True
         )
