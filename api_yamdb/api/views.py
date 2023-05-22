@@ -1,3 +1,5 @@
+from django.db import IntegrityError
+from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Avg
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
@@ -106,52 +108,49 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class SignUpViewSet(APIView):
-    """Получение кода подтверждения"""
     permission_classes = (AllowAny,)
 
     def post(self, request):
         serializer = SignUpSerializer(data=request.data)
-        if (User.objects.filter(username=request.data.get('username'),
-                                email=request.data.get('email'))):
-            user = User.objects.get(username=request.data.get('username'))
-            serializer = SignUpSerializer(user, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        user = User.objects.get(username=request.data.get('username'))
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        try:
+            user, _ = User.objects.get_or_create(
+                username=username, email=email
+            )
+        except IntegrityError:
+            return Response('Логин или адрес почты уже существуют',
+                            HTTP_400_BAD_REQUEST)
+        confirmation_code = default_token_generator.make_token(user)
         send_mail(
             subject='YAMDB confirmation code',
             message=(
-                f'Ваш confirmation_code: {user.confirmation_code}\n'
+                f'Ваш confirmation_code: "{confirmation_code}"'
             ),
             from_email=settings.OUTGOING_EMAIL,
-            recipient_list=[request.data.get('email')],
+            recipient_list=[serializer.validated_data.get('email')],
             fail_silently=False,
         )
-        return Response(
-            serializer.data, status=HTTP_200_OK
-        )
+        return Response(serializer.data, status=HTTP_200_OK)
 
 
 class TokenViewSet(APIView):
-    """Получение JWT-токена"""
+    permission_classes = (AllowAny,)
+
     def post(self, request):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = get_object_or_404(
-            User, username=request.data.get('username')
-        )
-        if str(user.confirmation_code) == request.data.get(
-            'confirmation_code'
-        ):
-            refresh = RefreshToken.for_user(user)
-            token = {'token': str(refresh.access_token)}
-            return Response(
-                token, status=HTTP_200_OK
-            )
-        return Response(
-            {'confirmation_code': 'Неверный код подтверждения.'},
-            status=HTTP_400_BAD_REQUEST
-        )
+        username = serializer.validated_data.get('username')
+        confirmation_code = serializer.validated_data.get('confirmation_code')
+        user = get_object_or_404(User, username=username)
+        if not default_token_generator.check_token(user, confirmation_code):
+            message = (
+                'Неправильный код подтверждения.')
+            return Response({message}, status=HTTP_400_BAD_REQUEST)
+        token = RefreshToken.for_user(user)
+        return Response({'token': str(token.access_token)},
+                        status=HTTP_200_OK)
 
 
 class UsersViewSet(viewsets.ModelViewSet):

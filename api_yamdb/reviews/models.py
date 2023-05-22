@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
-import uuid
+# import uuid
 from .validators import validate_username
 
 
@@ -57,12 +57,12 @@ class User(AbstractUser):
         max_length=150,
         blank=True
     )
-    confirmation_code = models.UUIDField(
-        'Код для получения/обновления токена',
-        default=uuid.uuid4,
-        editable=False,
-        unique=True
-    )
+    # confirmation_code = models.UUIDField(
+    #     'Код для получения/обновления токена',
+    #     default=uuid.uuid4,
+    #     editable=False,
+    #     unique=True
+    # )
 
     class Meta:
         verbose_name = 'Пользователь'
