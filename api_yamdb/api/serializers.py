@@ -9,6 +9,8 @@ from reviews.models import (
     User
 )
 
+from reviews.validators import validate_username
+
 
 class CategorySerializer(serializers.ModelSerializer):
 
@@ -99,7 +101,8 @@ class ReviewSerializer(serializers.ModelSerializer):
             request.method == 'POST'
             and Review.objects.filter(title=title, author=author).exists()
         ):
-            raise serializers.ValidationError('Может существовать только один отзыв.')
+            raise serializers.ValidationError(
+                'Может существовать только один отзыв.')
         return data
 
     class Meta:
@@ -127,12 +130,20 @@ class SimpleUserSerializer(serializers.ModelSerializer):
         read_only_fields = ('role',)
 
 
-class SignUpSerializer(serializers.ModelSerializer):
+class SignUpSerializer(serializers.Serializer):
     """Сериализатор получение кода подтверждения."""
+    username = serializers.RegexField(
+        max_length=150,
+        regex=r'^[\w.@+-]+\Z',
+        required=True
+    )
+    email = serializers.EmailField(
+        max_length=254,
+        required=True
+    )
 
-    def create(self, validated_data):
-        user, _ = User.objects.get_or_create(**validated_data)
-        return user
+    def validate_username(self, value):
+        return validate_username(value)
 
     class Meta:
         model = User
