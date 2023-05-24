@@ -132,13 +132,13 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
 class SignUpSerializer(serializers.Serializer):
     """Сериализатор получение кода подтверждения."""
+    email = serializers.EmailField(
+        max_length=254,
+        required=True
+    )
     username = serializers.RegexField(
         max_length=150,
         regex=r'^[\w.@+-]+\Z',
-        required=True
-    )
-    email = serializers.EmailField(
-        max_length=254,
         required=True
     )
 
@@ -148,6 +148,22 @@ class SignUpSerializer(serializers.Serializer):
     class Meta:
         model = User
         fields = ('email', 'username')
+
+    def validate(self, data):
+        data = super().validate(data)
+        email = data.get('email')
+        username = data.get('username')
+        if (
+            not User.objects.filter(email=email, username=username)
+            and User.objects.filter(email=email)
+        ):
+            raise serializers.ValidationError('Этот адрес почты занят')
+        if (
+            not User.objects.filter(email=email, username=username)
+            and User.objects.filter(username=username)
+        ):
+            raise serializers.ValidationError('Этот имя уже занято')
+        return data
 
 
 class TokenSerializer(serializers.Serializer):

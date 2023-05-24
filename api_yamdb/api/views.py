@@ -1,4 +1,3 @@
-from django.db import IntegrityError
 from django.contrib.auth.tokens import default_token_generator
 from django.db.models import Avg
 from django.core.mail import send_mail
@@ -113,18 +112,13 @@ class SignUpViewSet(APIView):
 
     def post(self, request):
         """Создание пользователя И Отправка письма с кодом."""
-        # ----------------------------
         serializer = SignUpSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data.get('username')
         email = serializer.validated_data.get('email')
-        try:
-            user, _ = User.objects.get_or_create(
-                username=username, email=email
-            )
-        except IntegrityError:
-            return Response('Логин или адрес почты уже существуют',
-                            HTTP_400_BAD_REQUEST)
+        user, _ = User.objects.get_or_create(
+            username=username, email=email
+        )
         confirmation_code = default_token_generator.make_token(user)
         send_mail(
             subject='YAMDB confirmation code',
